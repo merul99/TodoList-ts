@@ -1,45 +1,27 @@
 import { useState } from "react";
-import ITodo from "./Interface";
+import { ISingleToDo } from "./Interface";
 import { MdOutlineDoneOutline, MdOutlineDelete, MdOutlineModeEdit } from 'react-icons/md';
 import { Draggable } from "react-beautiful-dnd";
-
-interface ISingleToDo {
-    todo: ITodo
-    todos: ITodo[];
-    setTodos: React.Dispatch<React.SetStateAction<ITodo[]>>
-    index: number;
-    completedTodos: ITodo[];
-    setCompletedTodos: React.Dispatch<React.SetStateAction<ITodo[]>>
-}
+import { useDispatch } from "react-redux";
+import { deleteTodo, doneTodo, updateTodo } from "../Redux/Action/actionCreator";
 
 
-const SingleTodo = ({ todo, todos, setTodos, index, completedTodos, setCompletedTodos }: ISingleToDo) => {
+const SingleTodo = ({ todo, index }: ISingleToDo) => {
+    const dispatch = useDispatch()
     const [isEditMode, setIsEditMode] = useState<boolean>(false)
     const [editTodo, setEditTodo] = useState<string>(todo.todo)
 
     const doneHandler = (id: number) => {
-        const foundCompletedTodo = completedTodos.find(todo => todo.id === id);
-        const foundPendingTodo = todos.find(todo => todo.id === id);
-
-        if (foundCompletedTodo) {
-            setCompletedTodos(completedTodos.filter(todo => todo.id !== foundCompletedTodo.id))
-            foundCompletedTodo.isDone = false
-            setTodos([...todos, foundCompletedTodo])
-        }
-        if (foundPendingTodo) {
-            setTodos(todos.filter(todo => todo.id !== foundPendingTodo.id))
-            foundPendingTodo.isDone = true
-            setCompletedTodos([...completedTodos, foundPendingTodo])
-        }
+        dispatch(doneTodo(id))
     }
 
     const deleteHandler = (id: number) => {
-        setTodos(todos.filter(todo => todo.id !== id))
-        setCompletedTodos(completedTodos.filter(todo => todo.id !== id))
+        dispatch(deleteTodo(id))
     }
 
-    const editHandler = (id: number) => {
-        setTodos(todos.map(todo => todo.id === id ? { ...todo, todo: editTodo } : todo))
+    const editHandler = (e: React.FormEvent<HTMLFormElement>, id: number) => {
+        e.preventDefault()
+        dispatch(updateTodo(id, editTodo))
         setIsEditMode(false)
     }
 
@@ -53,7 +35,7 @@ const SingleTodo = ({ todo, todos, setTodos, index, completedTodos, setCompleted
                     <div className="card-body d-flex justify-content-between"
                     >
                         {
-                            isEditMode ? <form onSubmit={() => editHandler(todo.id)}>
+                            isEditMode ? <form onSubmit={(e) => editHandler(e, todo.id)}>
                                 <input className="form-control" type="text" value={editTodo} onChange={(e) => setEditTodo(e.target.value)} />
                             </form> : todo.isDone ?
                                 <s>{todo.todo}</s>
